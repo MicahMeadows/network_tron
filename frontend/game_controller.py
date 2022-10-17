@@ -1,5 +1,5 @@
-from client import Client
-from tron_game import TronGame
+from frontend.client import Client
+from frontend.tron_game import TronGame
 
 class TronGameController:
     def __init__(self, tron_game: TronGame, client: Client):

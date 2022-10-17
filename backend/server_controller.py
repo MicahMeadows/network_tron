@@ -1,5 +1,5 @@
-from backend_game import BackendGame
-from game_server import GameServer
+from .game_server import GameServer
+from .backend_game import BackendGame
 
 class ServerController:
     def __init__(self, backend_game: BackendGame, server: GameServer):

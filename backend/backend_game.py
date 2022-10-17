@@ -1,6 +1,6 @@
-from ast import List
-from player import MoveDirection, Player
 
+from ast import List
+from common.player import MoveDirection, Player
 
 class BackendGame:
     def __init__(self) -> None:

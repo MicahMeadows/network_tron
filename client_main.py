@@ -1,7 +1,7 @@
 import asyncio
-from client import Client
-from game_controller import TronGameController
-from tron_game import TronGame
+from frontend.client import Client
+from frontend.game_controller import TronGameController
+from frontend.tron_game import TronGame
 
 async def main():
     '''main composition method'''

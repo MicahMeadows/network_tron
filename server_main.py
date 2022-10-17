@@ -1,8 +1,10 @@
+
 import asyncio
 
-from backend_game import BackendGame
-from game_server import GameServer
-from server_controller import ServerController
+from backend.backend_game import BackendGame
+from backend.game_server import GameServer
+from backend.server_controller import ServerController
+
 
 async def main():
     backend_game = BackendGame()
@@ -12,4 +14,5 @@ async def main():
 
     await server_controller.start()
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

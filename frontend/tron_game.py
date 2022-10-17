@@ -3,7 +3,7 @@
 import curses
 import time
 
-from player import MoveDirection, Player
+from common.player import MoveDirection, Player
 
 class TronGame:
     def __init__(self):
