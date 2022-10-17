@@ -1,11 +1,10 @@
-'''server websocket module'''
 
 import asyncio
 from xmlrpc.client import MAXINT
 import websockets
 from random import randint
 
-class Server:
+class GameServer:
     '''class for creating a server'''
     def __init__(self) -> None:
         self.users = []
@@ -20,13 +19,8 @@ class Server:
     async def listen(self, websocket):
         '''method that will listen for new messages'''
         async for message in websocket:
+            print(f"got message: {message}")
             if message == "get user":
                 random_id = randint(0, MAXINT)
+                print(f'randID: {random_id}')
                 await websocket.send(f"{random_id}")
-
-async def main():
-    '''Main method'''
-    server = Server()
-    await server.start()
-
-asyncio.run(main())
