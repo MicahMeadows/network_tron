@@ -4,12 +4,10 @@ from curses.panel import update_panels
 from xmlrpc.client import Server
 from random import randint
 import random
-import threading
 from src.common.coordinate import Coordinate
 from src.common.game_state import GameState
 
 from dataclasses_json import dataclass_json
-import websockets
 
 from src.common.player import MoveDirection, Player
 from src.common.player_dto import PlayerDTO
@@ -66,6 +64,30 @@ class ServerController:
         new_socket_player = SocketPlayer(player, connection)
         self.socket_players.append(new_socket_player)
         self.update_players()
+
+    @staticmethod
+    def create_player_dto(player: Player):
+        coordinates = list(map(lambda pos : Coordinate(x=pos[0], y=pos[1]), player.trail))
+        return PlayerDTO(display_character=player.display_char, positions=coordinates, is_alive=player.alive)
+
+    def game_loop(self):
+        while True:
+            self.backend_game.move_players()
+
+            players = list(map(lambda socket_player : socket_player.player, self.socket_players))
+            player_dtos = list(map(lambda player : self.create_player_dto(player), players))
+
+            game_state: GameState = GameState(player_dtos)
+            game_state_json = game_state.to_json()
+            game_state_message = Message("game-state-update", game_state_json)
+            game_state_message_json = game_state_message.to_json()
+
+            for socket_player in self.socket_players:
+                try:
+                    task = socket_player.socket.send(game_state_message_json)
+                    asyncio.run(task)
+                except:
+                    self.disconnect_player(socket_player)
 
     # idk do something with this
     def close(self):
