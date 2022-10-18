@@ -20,9 +20,6 @@ class GameServer:
     def set_on_new_connection(self, method):
         self.on_new_connection = method
 
-    def remove_connection(self, connection):
-        self.users.remove(connection)
-    
     async def start(self):
         '''start the server up'''
         async with websockets.serve(self.listen, "localhost", self.PORT):
@@ -36,13 +33,19 @@ class GameServer:
                 print(f'new connection: {websocket.local_address}')
                 self.on_new_connection(websocket)
 
-        async for message in websocket:
-            try:
-                message = Message.from_json(message)
+        try:
+            async for message in websocket:
                 try:
-                    message_handler = self.message_handlers[message.label]
-                    message_handler(websocket, message.body_json)
+                    message = Message.from_json(message)
+                    try:
+                        message_handler = self.message_handlers[message.label]
+                        message_handler(websocket, message.body_json)
+                    except:
+                        print(f'failed to get message handler for ({message.label})')
                 except:
-                    print(f'failed to get message handler for ({message.label})')
+                    print('error parsing messages')
+        except:
+            try:
+                self.users.remove(websocket)
             except:
-                print('error parsing messages')
+                pass

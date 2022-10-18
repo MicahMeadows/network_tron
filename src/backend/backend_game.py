@@ -10,7 +10,7 @@ class BackendGame:
     def __init__(self, game_size) -> None:
         self.players: list[Player] = []
         self.game_size = game_size
-        self.move_delay = .2
+        self.move_delay = .4
         self.next_move = time.time()
 
     def set_players(self, players):
