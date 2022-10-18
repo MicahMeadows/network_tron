@@ -4,6 +4,8 @@ from curses.panel import update_panels
 from xmlrpc.client import Server
 from random import randint
 import random
+
+import websockets
 from src.common.coordinate import Coordinate
 from src.common.game_state import GameState
 
@@ -72,7 +74,14 @@ class ServerController:
 
     def game_loop(self):
         while True:
-            self.backend_game.move_players()
+            if len(self.socket_players) >= 2:
+                self.backend_game.move_players()
+            else:
+                player_connections = list(map(lambda socket_player: socket_player.socket, self.socket_players))
+                waiting_message = Message("waiting-for-players", str(2 - len(self.socket_players)))
+                waiting_message_json = waiting_message.to_json()
+                websockets.broadcast(player_connections, waiting_message_json)
+
 
             players = list(map(lambda socket_player : socket_player.player, self.socket_players))
             player_dtos = list(map(lambda player : self.create_player_dto(player), players))

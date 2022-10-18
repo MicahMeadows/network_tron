@@ -15,6 +15,7 @@ class TronGame:
         self.key = curses.KEY_RIGHT
         self.render_delay = .1
         self.next_render = time.time()
+        self.waiting_for_players = False
 
         self.score_a = 0
         self.score_b = 0
@@ -33,6 +34,9 @@ class TronGame:
         self.window.keypad(1)
         self.window.nodelay(1)
 
+    def set_waiting_for_players(self, is_waiting):
+        self.waiting_for_players = is_waiting
+
     def set_on_get_players(self, on_get_players):
         self.on_get_players = on_get_players
 
@@ -45,6 +49,9 @@ class TronGame:
 
     def draw_title_string(self):
         self.window.addstr(0, 2, "Tron")
+
+    def draw_waiting_message(self):
+        self.window.addstr(5, 5, "Waiting for players...")
 
     def draw_score_string(self):
         score_string = self.get_score_string()
@@ -103,6 +110,10 @@ class TronGame:
 
                 self.draw_title_string()
                 self.draw_score_string()
+
+                if self.waiting_for_players:
+                    self.draw_waiting_message()
+                    self.set_waiting_for_players(False)
 
                 players: list[PlayerDTO] = list(self.on_get_players())
                 for player in players:

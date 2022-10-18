@@ -1,5 +1,6 @@
 import asyncio
 from src.common.game_state import GameState
+from src.frontend import tron_game
 from src.frontend.client import Client
 from src.frontend.tron_game import TronGame
 
@@ -10,10 +11,12 @@ class TronGameController:
         self.setup_message_handlers()
         self.setup_game_methods()
         self.current_game_state_json: str = None
+        self.waiting_for_players = False
 
     def setup_message_handlers(self):
         self.client.register_message_handler('game-state-update', self.game_state_update_message_handler)
         self.client.register_message_handler('new-user-id', self.new_user_id_message_handler)
+        self.client.register_message_handler('waiting-for-players', self.waiting_for_players_message_handler)
 
     def setup_game_methods(self):
         self.tron_game.set_on_get_players(self.get_players)
@@ -31,6 +34,9 @@ class TronGameController:
     
     def game_state_update_message_handler(self, game_state_json):
         self.current_game_state_json = game_state_json
+
+    def waiting_for_players_message_handler(self, body_json):
+        self.tron_game.set_waiting_for_players(True)
 
     def new_user_id_message_handler(self, user_id_json):
         pass
