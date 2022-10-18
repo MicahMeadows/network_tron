@@ -2,13 +2,19 @@
 
 import curses
 import time
+from src.common.coordinate import Coordinate
 
 from src.common.player import MoveDirection, Player
+from src.common.player_dto import PlayerDTO
 
 class TronGame:
     def __init__(self):
+        self.on_get_players = None
+        self.on_player_move = None
         self.CLOSE_KEY = 27
         self.key = curses.KEY_RIGHT
+        self.render_delay = .1
+        self.next_render = time.time()
 
         self.score_a = 0
         self.score_b = 0
@@ -26,6 +32,12 @@ class TronGame:
         self.window = curses.newwin(self.window_size["rows"], self.window_size["columns"], 0, 0) # y, x
         self.window.keypad(1)
         self.window.nodelay(1)
+
+    def set_on_get_players(self, on_get_players):
+        self.on_get_players = on_get_players
+
+    def set_on_player_move(self, on_player_move):
+        self.on_player_move = on_player_move
 
         
     def get_score_string(self):
@@ -51,50 +63,51 @@ class TronGame:
         ]:
             return new_key
 
-    def polar_to_curses_coordinate(self, polar):
-        x_fix = polar[0]
-        y_fix = self.window_size["rows"] - 1 - polar[1]
-        return (x_fix, y_fix)
+    def polar_to_curses_coordinate(self, polar: Coordinate) -> Coordinate:
+        x_fix = polar.x
+        y_fix = self.window_size["rows"] - 1 - polar.y
+        return Coordinate(x_fix, y_fix)
 
-    def render_player(self, player: Player):
-        for pos in player.trail:
+    def render_player(self, player: PlayerDTO):
+        for pos in player.positions:
             curses_coords = self.polar_to_curses_coordinate(pos)
             try:
-                self.window.addch(curses_coords[1], curses_coords[0], player.display_char)
+                self.window.addch(curses_coords.y, curses_coords.x, str(player.display_character) if player.is_alive else 'X')
             except:
                 pass
 
     def run(self):
-        player = Player('#', 'Micah',  6, 6, MoveDirection.RIGHT)
-
         while self.key != self.CLOSE_KEY:
-            self.window.erase()
-            self.window.border(0)
-
-            self.draw_title_string()
-            self.draw_score_string()
-
+            
             key = self.get_new_key()
 
-            moveDirection: MoveDirection = None
+            move_direction: MoveDirection = None
             match key:
                 case curses.KEY_RIGHT:
-                    moveDirection = MoveDirection.RIGHT
+                    move_direction = MoveDirection.RIGHT
                 case curses.KEY_LEFT:
-                    moveDirection = MoveDirection.LEFT
+                    move_direction = MoveDirection.LEFT
                 case curses.KEY_UP:
-                    moveDirection = MoveDirection.UP
+                    move_direction = MoveDirection.UP
                 case curses.KEY_DOWN:
-                    moveDirection = MoveDirection.DOWN
+                    move_direction = MoveDirection.DOWN
             
-            if moveDirection:
-                player.set_direction(moveDirection)
+            if move_direction:
+                self.on_player_move(move_direction)
 
-            player.move()
+            current_time = time.time()
+            if current_time > self.next_render:
+                self.next_render = current_time + self.render_delay
+                self.window.erase()
+                self.window.border(0)
 
-            self.render_player(player)
+                self.draw_title_string()
+                self.draw_score_string()
 
-            self.window.refresh()
-            curses.napms(100)
+                players: list[PlayerDTO] = list(self.on_get_players())
+                for player in players:
+                    self.render_player(player)
+
+                self.window.refresh()
         curses.endwin()
         print("good game")
