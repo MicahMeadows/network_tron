@@ -45,8 +45,8 @@ class ServerController:
         self.server.register_message_handler("create-new-user-id", self.create_new_user_id_message_handler)
         self.server.register_message_handler("player-change-direction", self.player_change_direction_message_handler)
 
-    def player_change_direction_message_handler(self, sender, json_body):
-        new_dir = MoveDirection(json_body)
+    def player_change_direction_message_handler(self, sender, direction_string):
+        new_dir = MoveDirection(direction_string)
         for socket_player in self.socket_players:
             if socket_player.socket == sender:
                 self.backend_game.set_player_direction(socket_player.player.name, new_dir)
@@ -90,14 +90,14 @@ class ServerController:
         new_proto.is_alive = player_dto.is_alive
         new_proto.display_character = str(player_dto.display_character)
 
-        coordinate_protos = list(map(lambda pos: ServerController.create_coordinate_proto(pos), player_dto.positions))
+        coordinate_protos = list(map(ServerController.create_coordinate_proto, player_dto.positions))
         new_proto.positions.extend(coordinate_protos)
         return new_proto
 
     @staticmethod
     def create_game_state_proto(game_state: GameState) -> game_state_pb2.GameState():
         new_proto = game_state_pb2.GameState()
-        new_proto_players = list(map(lambda player: ServerController.create_player_dto_proto(player), game_state.players))
+        new_proto_players = list(map(ServerController.create_player_dto_proto, game_state.players))
         new_proto.players.extend(new_proto_players)
         return new_proto
 
@@ -114,14 +114,18 @@ class ServerController:
                 self.backend_game.move_players()
             else:
                 player_connections = list(map(lambda socket_player: socket_player.socket, self.socket_players))
-                waiting_message = Message("waiting-for-players", str(2 - len(self.socket_players)))
-                waiting_message_json = waiting_message.to_json()
-                websockets.broadcast(player_connections, waiting_message_json)
+                
+                waiting_message_proto = message_pb2.Message()
+                waiting_message_proto.label = "waiting-for-players"
+                waiting_message_proto.body = str(2 - len(self.socket_players))
+
+                waiting_message_data_str = waiting_message_proto.SerializeToString()
+                websockets.broadcast(player_connections, waiting_message_data_str)
 
 
             # get list of players for game state
             players = list(map(lambda socket_player : socket_player.player, self.socket_players))
-            player_dtos = list(map(lambda player : self.create_player_dto(player), players))
+            player_dtos = list(map(self.create_player_dto, players))
 
             # create game state and serialize it to a string for message
             game_state: GameState = GameState(player_dtos)

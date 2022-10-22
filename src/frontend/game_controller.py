@@ -1,3 +1,4 @@
+from ast import literal_eval
 import asyncio
 from src.common.coordinate import Coordinate
 from src.common.game_state import GameState
@@ -51,15 +52,15 @@ class TronGameController:
         return PlayerDTO(
             display_character=proto.display_character,
             is_alive=proto.is_alive,
-            positions=list(map(lambda coord: TronGameController.coordinate_from_proto(coord), proto.positions))
+            positions=list(map(TronGameController.coordinate_from_proto, proto.positions))
         )
 
     @staticmethod
     def game_state_from_proto(game_state_proto) -> GameState:
-        return GameState(players=list(map(lambda player_proto: TronGameController.player_dto_from_proto(player_proto), game_state_proto.players)))
+        return GameState(players=list(map(TronGameController.player_dto_from_proto, game_state_proto.players)))
     
     def game_state_update_message_handler(self, game_state_data_str):
-        game_state_data_str = eval(game_state_data_str)
+        game_state_data_str = literal_eval(game_state_data_str)
         new_game_state_proto = game_state_pb2.GameState().FromString(game_state_data_str)
         new_game_state = TronGameController.game_state_from_proto(new_game_state_proto)
 

@@ -1,12 +1,8 @@
 '''client websocket module'''
 
-from random import randint
-from xmlrpc.client import MAXINT
+from email import message
 import src.common.proto_compiled.message_pb2 as message_pb2
 import asyncio
-from curses import erasechar
-import json
-from dataclasses_json import dataclass_json
 import websockets
 from src.common.message import Message
 
@@ -32,15 +28,16 @@ class Client:
 
         await self.connection.send(create_user_id_message_string)
 
-
-        # create_user_id_message = Message("create-new-user-id", "")
-        # create_user_id_message_json = create_user_id_message.to_json()
-        # await self.connection.send(create_user_id_message_json)
-
     def change_direction(self, new_direction):
-        new_direction_message = Message("player-change-direction", new_direction)
-        new_direction_message_json = new_direction_message.to_json()
-        asyncio.run(self.connection.send(new_direction_message_json))
+        new_direction_message = message_pb2.Message()
+        new_direction_message.label = "player-change-direction"
+        new_direction_message.body = str(new_direction.value)
+        new_direction_message_data_str = new_direction_message.SerializeToString()
+        task = self.connection.send(new_direction_message_data_str)
+        asyncio.run(task)
+        # new_direction_message = Message("player-change-direction", new_direction)
+        # new_direction_message_json = new_direction_message.to_json()
+        # asyncio.run(self.connection.send(new_direction_message_json))
 
     def register_message_handler(self, label, fn):
         self.message_handlers[label] = fn
