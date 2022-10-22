@@ -1,17 +1,9 @@
-import sys
-import websockets
-
 import asyncio
 import threading
 
-from src.common.message import Message
 from src.backend.backend_game import BackendGame
 from src.backend.game_server import GameServer
 from src.backend.server_controller import ServerController
-from src.common.coordinate import Coordinate
-from src.common.game_state import GameState
-from src.common.player import Player
-from src.common.player_dto import PlayerDTO
 
 class ServerThread(threading.Thread):
     def __init__(self, server: GameServer):
@@ -29,8 +21,6 @@ class GameUpdateThread(threading.Thread):
     
     def run(self):
         self.server_controller.game_loop()
-
-    
 
 async def main():
     backend_game = BackendGame((80, 20))

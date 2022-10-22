@@ -7,7 +7,7 @@ from src.frontend import tron_game
 from src.frontend.client import Client
 from src.frontend.tron_game import TronGame
 
-import src.common.proto_compiled.game_state_pb2 as game_state_pb2
+import src.common.proto_compiled.tron_game as proto_tron_game
 
 class TronGameController:
     def __init__(self, tron_game: TronGame, client: Client):
@@ -56,12 +56,10 @@ class TronGameController:
     
     def game_state_update_message_handler(self, game_state_data_str):
         game_state_data_str = literal_eval(game_state_data_str)
-        new_game_state_proto = game_state_pb2.GameState().FromString(game_state_data_str)
+        new_game_state_proto = proto_tron_game.GameState().parse(game_state_data_str)
         new_game_state = TronGameController.game_state_from_proto(new_game_state_proto)
 
         self.current_game_state = new_game_state
-
-        # self.current_game_state_json = game_state_json
 
     def waiting_for_players_message_handler(self, body):
         self.tron_game.set_waiting_for_players(True)

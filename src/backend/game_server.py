@@ -1,11 +1,8 @@
 import asyncio
 from xmlrpc.client import MAXINT
 import websockets
-from random import randint
-import threading
-import time
 from src.common.message import Message
-import src.common.proto_compiled.message_pb2 as message_pb2
+import src.common.proto_compiled.message as proto_message
 
 class GameServer:
     '''class for creating a server'''
@@ -48,7 +45,7 @@ class GameServer:
                         print(f'Failure to handle as json message: {e}')
 
                     try:
-                        message_proto = message_pb2.Message().FromString(message)
+                        message_proto = proto_message.Message().FromString(message)
                         try:
                             message_handler = self.message_handlers[message_proto.label]
                             message_handler(websocket, message_proto.body)

@@ -1,7 +1,7 @@
 '''client websocket module'''
 
 from email import message
-import src.common.proto_compiled.message_pb2 as message_pb2
+import src.common.proto_compiled.message as message_pb2
 import asyncio
 import websockets
 from src.common.message import Message
@@ -24,7 +24,7 @@ class Client:
         create_user_id_message.label = "create-new-user-id"
         create_user_id_message.body = ""
 
-        create_user_id_message_string = create_user_id_message.SerializeToString()
+        create_user_id_message_string = bytes(create_user_id_message)
 
         await self.connection.send(create_user_id_message_string)
 
@@ -32,7 +32,7 @@ class Client:
         new_direction_message = message_pb2.Message()
         new_direction_message.label = "player-change-direction"
         new_direction_message.body = str(new_direction.value)
-        new_direction_message_data_str = new_direction_message.SerializeToString()
+        new_direction_message_data_str = bytes(new_direction_message)
         task = self.connection.send(new_direction_message_data_str)
         asyncio.run(task)
         # new_direction_message = Message("player-change-direction", new_direction)
@@ -59,9 +59,9 @@ class Client:
                     json_fail = f'Failed to parse as json: {e}'
                 
                 try: # try to parse as proto buf
-                    proto_message = message_pb2.Message().FromString(message)
-                    message_handler = self.message_handlers[proto_message.label]
-                    message_handler(proto_message.body)
+                    message_proto: message_pb2.Message = message_pb2.Message().parse(message)
+                    message_handler = self.message_handlers[message_proto.label]
+                    message_handler(message_proto.body)
                 except Exception as e:
                     proto_fail = f'Failed to parse as proto: {e}'
                 
