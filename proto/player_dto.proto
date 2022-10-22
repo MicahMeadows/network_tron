@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+import "coordinate.proto";
+
+package tron_game;
+
+message PlayerDTO {
+    bool is_alive = 1;
+    string display_character = 2;
+    repeated Coordinate positions = 3;
+}

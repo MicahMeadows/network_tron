@@ -5,4 +5,4 @@ from dataclasses_json import dataclass_json
 @dataclass
 class Message:
     label: str
-    body_json: str
+    body: str

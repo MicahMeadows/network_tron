@@ -5,6 +5,7 @@ from random import randint
 import threading
 import time
 from src.common.message import Message
+import src.common.proto_compiled.message_pb2 as message_pb2
 
 class GameServer:
     '''class for creating a server'''
@@ -36,14 +37,27 @@ class GameServer:
         try:
             async for message in websocket:
                 try:
-                    message = Message.from_json(message)
                     try:
-                        message_handler = self.message_handlers[message.label]
-                        message_handler(websocket, message.body_json)
-                    except:
-                        print(f'failed to get message handler for ({message.label})')
-                except:
-                    print('error parsing messages')
+                        message_json = Message.from_json(message)
+                        try:
+                            message_handler = self.message_handlers[message_json.label]
+                            message_handler(websocket, message_json.body)
+                        except:
+                            raise Exception(f'failed to get message handler for ({message_json.label})')
+                    except Exception as e:
+                        print(f'Failure to handle as json message: {e}')
+
+                    try:
+                        message_proto = message_pb2.Message().FromString(message)
+                        try:
+                            message_handler = self.message_handlers[message_proto.label]
+                            message_handler(websocket, message_proto.body)
+                        except Exception as e:
+                            raise Exception(f'failed to get message handler for ({message_proto.label})')
+                    except Exception as e:
+                        print(f'Failure to handle message as proto buf: {e}')
+                except Exception as e:
+                    print(f'Failed to parse message: {e}')
         except:
             try:
                 self.users.remove(websocket)

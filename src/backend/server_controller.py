@@ -1,9 +1,14 @@
-from array import array
 import asyncio
 from curses.panel import update_panels
+from email import message
 from xmlrpc.client import Server
 from random import randint
 import random
+
+import src.common.proto_compiled.player_dto_pb2 as player_dto_pb2
+import src.common.proto_compiled.coordinate_pb2 as coordinate_pb2
+import src.common.proto_compiled.message_pb2 as message_pb2
+import src.common.proto_compiled.game_state_pb2 as game_state_pb2
 
 import websockets
 from src.common.coordinate import Coordinate
@@ -46,8 +51,8 @@ class ServerController:
             if socket_player.socket == sender:
                 self.backend_game.set_player_direction(socket_player.player.name, new_dir)
 
-    def create_new_user_id_message_handler(self, sender, body_json):
-        print(body_json)
+    def create_new_user_id_message_handler(self, sender, body):
+        print(f'({sender.local_address}) asked for new id')
     
     def update_players(self):
         player_list = list(map(lambda socket_player : socket_player.player, self.socket_players))
@@ -72,6 +77,37 @@ class ServerController:
         coordinates = list(map(lambda pos : Coordinate(x=pos[0], y=pos[1]), player.trail))
         return PlayerDTO(display_character=player.display_char, positions=coordinates, is_alive=player.alive)
 
+    @staticmethod
+    def create_coordinate_proto(coordinate: Coordinate) -> coordinate_pb2.Coordinate:
+        new_proto = coordinate_pb2.Coordinate()
+        new_proto.x = coordinate.x
+        new_proto.y = coordinate.y
+        return new_proto
+    
+    @staticmethod
+    def create_player_dto_proto(player_dto: PlayerDTO) -> player_dto_pb2.PlayerDTO():
+        new_proto = player_dto_pb2.PlayerDTO()
+        new_proto.is_alive = player_dto.is_alive
+        new_proto.display_character = str(player_dto.display_character)
+
+        coordinate_protos = list(map(lambda pos: ServerController.create_coordinate_proto(pos), player_dto.positions))
+        new_proto.positions.extend(coordinate_protos)
+        return new_proto
+
+    @staticmethod
+    def create_game_state_proto(game_state: GameState) -> game_state_pb2.GameState():
+        new_proto = game_state_pb2.GameState()
+        new_proto_players = list(map(lambda player: ServerController.create_player_dto_proto(player), game_state.players))
+        new_proto.players.extend(new_proto_players)
+        return new_proto
+
+    @staticmethod
+    def create_message_proto(message: Message) -> message_pb2.Message():
+        new_proto = message_pb2.Message()
+        new_proto.label = message.label
+        new_proto.body = str(message.body)
+        return new_proto
+
     def game_loop(self):
         while True:
             if len(self.socket_players) >= 2:
@@ -83,17 +119,23 @@ class ServerController:
                 websockets.broadcast(player_connections, waiting_message_json)
 
 
+            # get list of players for game state
             players = list(map(lambda socket_player : socket_player.player, self.socket_players))
             player_dtos = list(map(lambda player : self.create_player_dto(player), players))
 
+            # create game state and serialize it to a string for message
             game_state: GameState = GameState(player_dtos)
-            game_state_json = game_state.to_json()
-            game_state_message = Message("game-state-update", game_state_json)
-            game_state_message_json = game_state_message.to_json()
+            game_state_proto = self.create_game_state_proto(game_state)
+            game_state_data_str = game_state_proto.SerializeToString()
+
+            # create message for state update
+            game_state_message = Message("game-state-update", str(game_state_data_str))
+            game_state_message_proto = self.create_message_proto(game_state_message)
+            game_state_message_data_str = game_state_message_proto.SerializeToString()
 
             for socket_player in self.socket_players:
                 try:
-                    task = socket_player.socket.send(game_state_message_json)
+                    task = socket_player.socket.send(game_state_message_data_str)
                     asyncio.run(task)
                 except:
                     self.disconnect_player(socket_player)

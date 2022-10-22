@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+import "player_dto.proto";
+
+package tron_game;
+
+message GameState {
+    repeated PlayerDTO players = 1;
+}

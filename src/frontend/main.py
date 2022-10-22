@@ -11,6 +11,7 @@ class GameThread(Thread):
 
     def run(self):
         self.game.run()
+    
 
 class NetworkThread(Thread):
     def __init__(self, client: Client):
@@ -22,9 +23,8 @@ class NetworkThread(Thread):
 
 async def main():
     '''main composition method'''
-    url = "ws://localhost:8080"
 
-    client = Client(url)
+    client = Client("ws://localhost:8080")
     game = TronGame()
     game_controller = TronGameController(game, client)
 
