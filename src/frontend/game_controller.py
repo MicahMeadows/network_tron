@@ -34,13 +34,8 @@ class TronGameController:
     def get_players(self):
         if self.current_game_state is None:
             return []
-        # if self.current_game_state_json is None: # return empty is no current state loaded
-        #     return []
 
         return self.current_game_state.players
-
-        # current_game_state = GameState.from_json(self.current_game_state_json)
-        # return current_game_state.players
 
 
     @staticmethod

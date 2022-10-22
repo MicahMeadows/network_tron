@@ -137,12 +137,15 @@ class ServerController:
             game_state_message_proto = self.create_message_proto(game_state_message)
             game_state_message_data_str = game_state_message_proto.SerializeToString()
 
-            for socket_player in self.socket_players:
-                try:
-                    task = socket_player.socket.send(game_state_message_data_str)
-                    asyncio.run(task)
-                except:
-                    self.disconnect_player(socket_player)
+            connections = list(map(lambda socket_player: socket_player.socket, self.socket_players))
+            websockets.broadcast(connections, game_state_message_data_str)
+
+            # for socket_player in self.socket_players:
+            #     try:
+            #         task = socket_player.socket.send(game_state_message_data_str)
+            #         asyncio.run(task)
+            #     except:
+            #         self.disconnect_player(socket_player)
 
     # idk do something with this
     def close(self):
