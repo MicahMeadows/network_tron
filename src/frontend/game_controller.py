@@ -3,11 +3,12 @@ import asyncio
 from src.common.coordinate import Coordinate
 from src.common.game_state import GameState
 from src.common.player_dto import PlayerDTO
-from src.frontend import tron_game
+from src.frontend import curses_tron_game
 from src.frontend.client import Client
-from src.frontend.tron_game import TronGame
+# from src.frontend.curses_tron_game import CursesTronGame
 
 import src.common.proto_compiled.tron_game as proto_tron_game
+from src.frontend.tron_game import TronGame
 
 class TronGameController:
     def __init__(self, tron_game: TronGame, client: Client):
@@ -15,7 +16,6 @@ class TronGameController:
         self.client = client
         self.setup_message_handlers()
         self.setup_game_methods()
-        # self.current_game_state_json: str = None
         self.current_game_state: GameState = None
         self.waiting_for_players = False
 

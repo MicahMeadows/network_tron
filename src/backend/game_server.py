@@ -45,7 +45,7 @@ class GameServer:
                         print(f'Failure to handle as json message: {e}')
 
                     try:
-                        message_proto = proto_message.Message().FromString(message)
+                        message_proto = proto_message.Message().parse(message)
                         try:
                             message_handler = self.message_handlers[message_proto.label]
                             message_handler(websocket, message_proto.body)
